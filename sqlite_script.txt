@@ -1,0 +1,210 @@
+-- Setup.
+.headers on
+.mode csv
+
+-- ***** ***** ***** ***** ***** ***** ***** ***** ***** ***** --
+
+-- [create tables]
+
+CREATE TABLE accidents (
+ID TEXT PRIMARY KEY,
+Severity INTEGER,
+Start_Time DATETIME,
+End_Time DATETIME,
+Start_Lat REAL,
+Start_Lng REAL,
+[Distance(mi)] REAL,
+Description TEXT,
+Number INTEGER,
+Street TEXT,
+Side TEXT,
+City TEXT,
+County TEXT,
+State TEXT,
+Zipcode TEXT,
+Country TEXT,
+Timezone TEXT,
+Weather_Timestamp DATETIME,
+[Temperature(F)] REAL,
+[Wind_Chill(F)] REAL,
+[Humidity(%)] REAL,
+[Pressure(in)] REAL,
+[Visibility(mi)] REAL,
+Wind_Direction TEXT,
+[Wind_Speed(mph)] REAL,
+[Precipitation(in)] REAL,
+Weather_Condition TEXT,
+Sunrise_Sunset TEXT,
+Civil_Twilight TEXT,
+Nautical_Twilight TEXT,
+Astronomical_Twilight TEXT
+);
+
+
+CREATE TABLE state_cars (
+state TEXT,
+total INTEGER
+);
+
+
+-- [import csv to tables]
+
+.import data/cleaned_US_Accidents_Dec19.csv accidents
+.import data/state_cars.csv state_cars
+
+-- [delete 1 data row for 2015 and 6 data rows for 2020]
+
+DELETE FROM accidents
+WHERE Start_Time < '2016-01-01 00:00:00';
+
+DELETE FROM accidents
+WHERE Start_Time >= '2020-01-01 00:00:00';
+
+-- [create common views]
+
+CREATE TABLE accident_rate AS
+SELECT sc.state, CAST(sa.count AS FLOAT)/sc.total*100 AS accident_percentage
+FROM
+    (SELECT State, COUNT(ID) AS count
+    FROM accidents
+    GROUP BY State) AS sa
+INNER JOIN state_cars AS sc
+WHERE sa.State = sc.state
+ORDER BY accident_percentage DESC;
+
+
+CREATE TABLE barchart AS
+SELECT State, COUNT(ID) AS cnt, strftime('%Y', Start_Time) AS year,
+	Severity, Side, Weather_Condition
+FROM accidents
+GROUP BY State, year, Severity, Side, Weather_Condition;
+
+CREATE TABLE linechart_count_by_year AS
+SELECT strftime('%Y', start_time) AS year, COUNT(ID) AS count,
+	Severity, Side, Weather_Condition
+FROM accidents
+WHERE start_time NOT NULL AND start_time !=""
+GROUP BY year, Severity, Side, Weather_Condition;
+
+CREATE TABLE linechart_count_by_year_month AS
+SELECT strftime('%Y-%m', start_time) AS year_month, COUNT(ID) AS count,
+        Severity, Side, Weather_Condition
+FROM accidents
+WHERE start_time NOT NULL AND start_time !=""
+GROUP BY year_month, Severity, Side, Weather_Condition;
+
+CREATE TABLE linechart_count_by_month AS
+SELECT strftime('%m', start_time) AS month, COUNT(ID) AS count,
+        Severity, Side, Weather_Condition
+FROM accidents
+WHERE start_time NOT NULL AND start_time !=""
+GROUP BY month, Severity, Side, Weather_Condition;
+
+CREATE TABLE linechart_count_by_week AS
+SELECT 
+    CASE CAST(strftime('%w', start_time) AS integer)
+        WHEN 0 THEN 'Sun'
+        WHEN 1 THEN 'Mon'
+        WHEN 2 THEN 'Tue'
+        WHEN 3 THEN 'Wed'
+        WHEN 4 THEN 'Thu'
+        WHEN 5 THEN 'Fri'
+        ELSE 'Sat'
+    END AS week,
+    COUNT(ID) AS count, Severity, Side, Weather_Condition
+FROM accidents
+WHERE start_time NOT NULL AND start_time !=""
+GROUP BY week, Severity, Side, Weather_Condition;
+
+CREATE TABLE linechart_count_by_time AS
+SELECT strftime('%H:00', start_time) AS hour_of_day, COUNT(ID) AS count,
+	Severity, Side, Weather_Condition
+FROM accidents
+WHERE start_time NOT NULL AND start_time !=""
+GROUP BY hour_of_day, Severity, Side, Weather_Condition;
+
+
+CREATE TABLE count_sev_by_vis_time AS
+SELECT strftime('%H:00', start_time) AS hour_of_day, strftime('%Y', start_time) AS year,
+CASE
+    WHEN [Visibility(mi)] >=0 AND [Visibility(mi)] < 2 THEN '[0,2)'
+    WHEN [Visibility(mi)] >=2 AND [Visibility(mi)] < 5 THEN '[2,5)'
+    WHEN [Visibility(mi)] >=5 AND [Visibility(mi)] < 10 THEN '[5,10)'
+    ELSE 'over 10'
+END AS vis,
+AVG(Severity) AS avg_severity, COUNT(ID) AS count
+FROM accidents
+WHERE start_time NOT NULL AND start_time !="" AND [Visibility(mi)] >=0 
+GROUP BY hour_of_day, vis, year
+ORDER BY
+    CASE vis
+        WHEN '[0,2)' THEN 0
+        WHEN '[2,5)' THEN 1
+        WHEN '[5,10)' THEN 2
+        WHEN 'over 10' THEN 3
+    END;
+
+
+CREATE TABLE count_sev_by_temp_time AS
+SELECT strftime('%H:00', start_time) AS hour_of_day, strftime('%Y', start_time) AS year,
+CASE
+    WHEN [Temperature(F)] <0 THEN 'below 0'
+    WHEN [Temperature(F)] >=0 AND [Temperature(F)] < 30 THEN '[0, 30)'
+    WHEN [Temperature(F)] >=30 AND [Temperature(F)] < 50 THEN '[30, 50)'
+    WHEN [Temperature(F)] >=50 AND [Temperature(F)] < 70 THEN '[50, 70)'
+    WHEN [Temperature(F)] >=70 AND [Temperature(F)] < 90 THEN '[70, 90)'
+    ELSE 'over 90'
+END AS temp,
+AVG(Severity) AS avg_severity, COUNT(ID) AS count
+FROM accidents
+WHERE start_time NOT NULL AND start_time !="" AND [Temperature(F)] <= 134
+GROUP BY hour_of_day, temp, year
+ORDER BY
+    CASE temp
+        WHEN 'below 0' THEN 0
+        WHEN '[0, 30)' THEN 1
+        WHEN '[30, 50)' THEN 2
+        WHEN '[50, 70)' THEN 3
+        WHEN '[70, 90)' THEN 4
+        WHEN 'over 90' THEN 5
+    END;
+
+
+CREATE TABLE count_sev_by_temp_vis AS
+SELECT strftime('%Y', start_time) AS year,
+CASE
+    WHEN [Temperature(F)] <0 THEN 'below 0'
+    WHEN [Temperature(F)] >=0 AND [Temperature(F)] < 30 THEN '[0, 30)'
+    WHEN [Temperature(F)] >=30 AND [Temperature(F)] < 50 THEN '[30, 50)'
+    WHEN [Temperature(F)] >=50 AND [Temperature(F)] < 70 THEN '[50, 70)'
+    WHEN [Temperature(F)] >=70 AND [Temperature(F)] < 90 THEN '[70, 90)'
+    ELSE 'over 90'
+END AS temp,
+CASE
+    WHEN [Visibility(mi)] >=0 AND [Visibility(mi)] < 2 THEN '[0,2)'
+    WHEN [Visibility(mi)] >=2 AND [Visibility(mi)] < 5 THEN '[2,5)'
+    WHEN [Visibility(mi)] >=5 AND [Visibility(mi)] < 10 THEN '[5,10)'
+    ELSE 'over 10'
+END AS vis,
+AVG(Severity) AS avg_severity, COUNT(ID) AS count
+FROM accidents
+WHERE [Temperature(F)] <= 134 AND [Visibility(mi)] >=0
+GROUP BY vis, temp, year
+ORDER BY
+    CASE temp
+        WHEN 'below 0' THEN 0
+        WHEN '[0, 30)' THEN 1
+        WHEN '[30, 50)' THEN 2
+        WHEN '[50, 70)' THEN 3
+        WHEN '[70, 90)' THEN 4
+        WHEN 'over 90' THEN 5
+    END,
+    CASE vis
+        WHEN '[0,2)' THEN 0
+        WHEN '[2,5)' THEN 1
+        WHEN '[5,10)' THEN 2
+        WHEN 'over 10' THEN 3
+    END;
+
+
+
