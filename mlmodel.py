@@ -89,8 +89,6 @@ time_list = ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:
 week_list = week_num.keys()
 month_list = month_num.keys()
 weather_list = ('Cloudy','Clear','Rain','Haze','Snow','Fog')  # make sure it's a tuple otherwise mlmodelbackend will error
-temperature_list = ['<0', '[0, 30)', '[30, 50)', '[50, 70)', '[70, 90)', '>=90']
-visibility_list = ['Poor [0,2)', 'Moderate [2,5)', 'Good [5,10)', 'Very Good >=10']
 
 
 
@@ -138,23 +136,6 @@ layout_mlmodel = html.Div([
         ),
     ], className = 'ml_input'),
 
-
-    html.Label([
-        "Select temperature range (F)",
-        dcc.Dropdown(
-            id = 'model_temperature',
-            options=[{'label': i, 'value': i} for i in temperature_list],
-        ),
-    ], className = 'ml_input'),
-
-    html.Label([
-        "Select visibility range (mi)",
-        dcc.Dropdown(
-            id = 'model_visibility',
-            options=[{'label': i, 'value': i} for i in visibility_list],
-        ),
-    ], className = 'ml_input'),
-
     html.Label([
         dbc.Button("Apply", id="ml_apply", color="success"),
     ], className = 'ml_input'),
@@ -188,16 +169,15 @@ def update_rate_figure(selected_state):
 @app.callback(
     Output('ml_output_placeholder','children'),
     [Input('model_state','value'), Input('model_time','value'), Input('model_week','value'), Input('model_month','value'), \
-        Input('model_weather','value'), Input('model_temperature','value'), Input('model_visibility','value'), Input('ml_apply','n_clicks')]
+        Input('model_weather','value'), Input('ml_apply','n_clicks')]
 )
-def model_predict(state, time, week, month, weather, temperature, visibility, btn_apply):
-    if state is None or time is None or week is None or month is None or weather is None or temperature is None or visibility is None or btn_apply is None:
+def model_predict(state, time, week, month, weather, btn_apply):
+    if state is None or time is None or week is None or month is None or weather is None or btn_apply is None:
         raise PreventUpdate
     else:
         # apply button
         ctx = dash.callback_context
         button_id = ctx.triggered[0]["prop_id"].split(".")[0]  
-
         if button_id == "ml_apply":
             with open("rf_model.pkl", 'rb') as file:
                 # create dataframe with all zeros in the features
@@ -207,14 +187,11 @@ def model_predict(state, time, week, month, weather, temperature, visibility, bt
                 df = pd.DataFrame(temp_np, columns=col_names)
 
                 # apply correct value to each columns
-                hour_of_day = int(time[0:2])
-                df.at[0, 'hour_of_day'] = hour_of_day
+                f0 = 'hour_of_day_'+str(int(time[0:2]))
+                df.at[0, f0] = 1
 
                 f1 = 'state_'+state_abbr[state]
                 df.at[0, f1] = 1
-
-                f2 = 'temperature_'+temperature
-                df.at[0, f2] = 1
 
                 f3 = 'month_'+month_num[month]
                 df.at[0, f3] = 1
@@ -222,12 +199,8 @@ def model_predict(state, time, week, month, weather, temperature, visibility, bt
                 f4 = 'day_of_wk_'+week_num[week]
                 df.at[0, f4] = 1
 
-                f5 = 'visibility_'+visibility
-                df.at[0, f5] = 1
-
                 f6 = 'weather_'+weather
                 df.at[0, f6] = 1
-
                 predicted_sev = model.predict(df)
                 return predicted_sev
 

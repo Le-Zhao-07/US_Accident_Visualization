@@ -55,19 +55,19 @@ body = dbc.Container([
     ], style={"background-color": "#F0F0F0","margin-bottom":"50px"}),
 
     # ML model and accident rate per state
-    dbc.Row([
-        dbc.Col([html.H4("Accident Severity Predictor", style={'text-align': 'center'})],width=12),
-        dbc.Col([html.Div("Note: Select all the features on the left, the predictor will highlight the accident rate\
-            (Number of Accidents / Number of Registered Cars of State * 100%)\
-            of the selected state on the chart, and predict accident severity based on your input.\
-            The range of accident severity is 1 ~ 4, in which 1 is minor, 4 is severe.",
-             style={"font-size": "20px", "text-align":"center"})],width=12),
-    ], style={"background-color": "#F0F0F0"}),
+    # dbc.Row([
+    #     dbc.Col([html.H4("Accident Severity Predictor", style={'text-align': 'center'})],width=12),
+    #     dbc.Col([html.Div("Note: Select all the features on the left, the predictor will highlight the accident rate\
+    #         (Number of Accidents / Number of Registered Cars of State * 100%)\
+    #         of the selected state on the chart, and predict accident severity based on your input.\
+    #         The range of accident severity is 1 ~ 4, in which 1 is minor, 4 is severe.",
+    #          style={"font-size": "20px", "text-align":"center"})],width=12),
+    # ], style={"background-color": "#F0F0F0"}),
     
-    dbc.Row([
-        dbc.Col([layout_mlmodel], width=4),
-        dbc.Col([layout_ratechart], width=8),
-    ], style={"background-color": "#F0F0F0","margin-bottom":"50px"}),
+    # dbc.Row([
+    #     dbc.Col([layout_mlmodel], width=4),
+    #     dbc.Col([layout_ratechart], width=8),
+    # ], style={"background-color": "#F0F0F0","margin-bottom":"50px"}),
 
     # bar chart
     dbc.Row([

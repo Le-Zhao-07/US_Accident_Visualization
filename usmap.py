@@ -30,7 +30,7 @@ from util import state_abbr
 address_group = dbc.InputGroup(
     [
         dbc.InputGroupAddon("Address", addon_type="prepend"),
-        dbc.Input(id="input_address", placeholder="Full address / State / City / Zipcode ...", type="text")
+        dbc.Input(id="input_address", placeholder="Zipcode", type="text")
     ],
     size = 'lg',
 )
@@ -178,8 +178,7 @@ def on_button_click(n1, n2, n3, n4, n5):
             filterResult["year"] = ""
             return "Select year:"
         else:
-            filterResult_temp["year"] = button_id[4:]
-            print(filterResult_temp["year"])    
+            filterResult_temp["year"] = button_id[4:]  
             result_str = "Select year: " + filterResult_temp["year"]
             return result_str
         
@@ -215,8 +214,7 @@ def on_button_click(n1, n2, n3, n4, n5, n6, n7):
             filterResult["weather"] = ""
             return "Select weather:"
         else:
-            filterResult_temp["weather"] = button_id[8:]
-            print(filterResult_temp["weather"])    
+            filterResult_temp["weather"] = button_id[8:]  
             result_str = "Select weather: " + filterResult_temp["weather"]
             return result_str
 
@@ -400,13 +398,15 @@ def create_point_data(point_df, zoomLevel):
         'lon': point_df['Start_Lng'],
         'marker': {
             'opacity': 0.8,
-            'size': zoomLevel/2,
+            'size': zoomLevel/1.5,
             'color': point_df['Severity'],
             'cmin': 1,
             'cmax': 4,
             'autocolorscale': True
         },
         'showscale': False,
+        'text': ['Start Time: {}<br>Severity: {}'.format(point_df.Start_Time[i], point_df.Severity[i]) for i in range(point_df.shape[0])],
+        'showlegend': False,
         'name': "accidents"
     }
 
@@ -615,7 +615,6 @@ def on_remap(btn_apply, btn_reset, btn_search, relayoutData, layer_selector, inp
                         lat= relayoutData['mapbox.center']['lat'], lon=relayoutData['mapbox.center']['lon']
                         ), zoom=relayoutData['mapbox.zoom'])
         return map_fig, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
     # ===================
     # button click events
     # ===================
@@ -737,7 +736,7 @@ def geocode_address(address):
     #   'formatted': '11 Rue Sauteyron, 33800 Bordeaux, France',
     #   'geometry': {'lat': 44.8303087, 'lng': -0.5761911}}]
 
-    opencage_api_key = "eff579b1c3e643ba9ee30d82579c6142"
+    opencage_api_key = "1383b9ee671d4d2ea7abfe273586679a"
     geocoder = OpenCageGeocode(opencage_api_key)
 
     coordinates = None
