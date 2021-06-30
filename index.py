@@ -88,7 +88,8 @@ body = dbc.Container([
 style={"background-color": "#d9d9d9"},
 fluid=True)
 
+application = app.server
 app.layout = html.Div([body])
 
 if __name__ == '__main__':
-    app.run_server(debug=False, host="0.0.0.0", port=8080)
+    application.run(debug=False, host='0.0.0.0', port=8080)
