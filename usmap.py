@@ -178,7 +178,8 @@ def on_button_click(n1, n2, n3, n4, n5):
             filterResult["year"] = ""
             return "Select year:"
         else:
-            filterResult_temp["year"] = button_id[4:]  
+            filterResult_temp["year"] = button_id[4:]
+            print(filterResult_temp["year"])    
             result_str = "Select year: " + filterResult_temp["year"]
             return result_str
         
@@ -214,7 +215,8 @@ def on_button_click(n1, n2, n3, n4, n5, n6, n7):
             filterResult["weather"] = ""
             return "Select weather:"
         else:
-            filterResult_temp["weather"] = button_id[8:]  
+            filterResult_temp["weather"] = button_id[8:]
+            print(filterResult_temp["weather"])    
             result_str = "Select weather: " + filterResult_temp["weather"]
             return result_str
 
@@ -405,8 +407,6 @@ def create_point_data(point_df, zoomLevel):
             'autocolorscale': True
         },
         'showscale': False,
-        'text': ['Start Time: {}<br>Severity: {}'.format(point_df.Start_Time[i], point_df.Severity[i]) for i in range(point_df.shape[0])],
-        'showlegend': False,
         'name': "accidents"
     }
 
@@ -615,6 +615,7 @@ def on_remap(btn_apply, btn_reset, btn_search, relayoutData, layer_selector, inp
                         lat= relayoutData['mapbox.center']['lat'], lon=relayoutData['mapbox.center']['lon']
                         ), zoom=relayoutData['mapbox.zoom'])
         return map_fig, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
     # ===================
     # button click events
     # ===================
@@ -742,7 +743,7 @@ def geocode_address(address):
     coordinates = None
 
     try:
-        results = geocoder.geocode(address, no_annotations=1, language='en')
+        results = geocoder.geocode(address)
         if results and len(results):
             i = 0
             while i < len(results) and results[i]['components']['country_code'] != 'us':
