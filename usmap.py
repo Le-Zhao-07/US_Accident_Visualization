@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Mar  6 22:23:17 2020
-
 @author: Le Zhao, Yangzhan Yang, Zhiqi Yu
 """
 import dash
@@ -406,7 +405,9 @@ def create_point_data(point_df, zoomLevel):
             'cmax': 4,
             'autocolorscale': True
         },
-        'showscale': False,
+        # 'text': 'Severity: ' + point_df['Severity'].astype(str) + '<br>Time: ' + point_df['Start_Time'],
+        'text': 'Severity: ' + point_df['Severity'].astype(str),
+        # 'showscale': False,
         'name': "accidents"
     }
 
@@ -417,7 +418,6 @@ def create_map_fig(choropleth_state_data, choropleth_county_data, boundary_box, 
     """Create Plot.ly Figure object 
     
     Create figure object using state-level and county-level choropleth map data object.
-
     Args:
         choropleth_state_data (dict): state-level choropleth map object to be used in plot.ly Figure object.
         choropleth_county_data (dict): county-level choropleth map object to be used in plot.ly Figure object.
@@ -646,6 +646,7 @@ def on_remap(btn_apply, btn_reset, btn_search, relayoutData, layer_selector, inp
         return map_fig, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     elif event_id == "resetFilter":
+        subtable_sql = ""
         choropleth_state_data, choropleth_county_data = load_choropleth(None)
 
         if (relayoutData is None) or ('autosize' in relayoutData):
@@ -743,7 +744,7 @@ def geocode_address(address):
     coordinates = None
 
     try:
-        results = geocoder.geocode(address)
+        results = geocoder.geocode(address, no_annotations=1, language='en')
         if results and len(results):
             i = 0
             while i < len(results) and results[i]['components']['country_code'] != 'us':
